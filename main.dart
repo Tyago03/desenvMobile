@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 //Cores principais usadas:
 // Plano de fundo: #0E1315
@@ -15,6 +17,34 @@ class PerguntaApp extends StatefulWidget {
 }
 
 class _PerguntaAppState extends State<PerguntaApp> {
+
+  // Variável para armazenar a imagem selecionada
+  XFile? _imageFile;
+
+  // Função para pegar a imagem da galeria ou câmera
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final pickedFile = await ImagePicker().pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = pickedFile;
+        });
+      }
+    } catch (e) {
+      // Lidar com exceções
+      print('Erro ao pegar a imagem: $e');
+    }
+  }
+
+  // Widget para mostrar a imagem selecionada ou o ícone padrão
+  Widget _buildImage() {
+    if (_imageFile == null) {
+      return Icon(Icons.person, size: 120, color: Colors.white);
+    } else {
+      return Image.file(File(_imageFile!.path), width: 180, height: 180, fit: BoxFit.cover);
+    }
+  }
+
   int _currentIndex = 0;
 
   // Itens da NavBar
@@ -177,7 +207,7 @@ class _PerguntaAppState extends State<PerguntaApp> {
   }
 
   //Sub-Aba Alterar Foto
-  Widget _buildAlterarFoto() {
+Widget _buildAlterarFoto() {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF0E1315),
@@ -199,6 +229,31 @@ class _PerguntaAppState extends State<PerguntaApp> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            InkWell(
+              onTap: () async {
+                // Mostra um diálogo para escolher a câmera ou galeria
+                var source = await showDialog<ImageSource>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text("Escolha a origem da foto"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, ImageSource.camera),
+                        child: Text("Câmera"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, ImageSource.gallery),
+                        child: Text("Galeria"),
+                      ),
+                    ],
+                  ),
+                );
+                if (source != null) {
+                  await _pickImage(source);
+                }
+              },
+              child: _buildImage(), // Mostra a imagem ou o ícone padrão
+            ),
             const SizedBox(height: 60),
             OutlinedButton(
               onPressed: () {
@@ -218,6 +273,7 @@ class _PerguntaAppState extends State<PerguntaApp> {
       ),
     );
   }
+
 
   //Sub-Aba Alterar Nome
   Widget _buildAlterarNome() {
